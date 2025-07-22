@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Duty Report System</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .main-tabs {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .main-tabs button {
+      padding: 12px 24px;
+      border: none;
+      background: rgba(255,255,255,0.2);
+      color: white;
+      cursor: pointer;
+      border-radius: 25px;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .main-tabs button:hover {
+      background: rgba(255,255,255,0.3);
+      transform: translateY(-2px);
+    }
+
+    .main-tabs button.active {
+      background: white;
+      color: #667eea;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .section {
+      display: none;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-tabs {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+      gap: 10px;
+      position: relative;
+    }
+
+    .form-tabs button {
+      padding: 10px 20px;
+      border: none;
+      background: rgba(255,255,255,0.9);
+      color: #333;
+      cursor: pointer;
+      border-radius: 20px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .form-tabs button:hover {
+      background: white;
+      transform: translateY(-1px);
+    }
+
+    .form-tabs button.active {
+      background: #4CAF50;
+      color: white;
+    }
+
+    .form-tabs button.completed {
+      background: #28a745;
+      color: white;
+    }
+
+    .form-tabs button.completed::after {
+      content: '✓';
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #fff;
+      color: #28a745;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .master-submit-container {
+      text-align: center;
+      margin: 20px 0;
+      padding: 20px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+    }
+
+    .master-submit-btn {
+      padding: 15px 40px;
+      background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+      color: white;
+      border: none;
+      border-radius: 25px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .master-submit-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .master-submit-btn:not(:disabled):hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+    }
+
+    .progress-indicator {
+      color: white;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+
+    .form-container {
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      display: none;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .form-container.active {
+      display: block;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e1e1e1;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s ease;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #4CAF50;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(45deg, #4CAF50, #45a049);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+    }
+
+    .pdf-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      justify-content: center;
+    }
+
+    .pdf-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .download-pdf-btn {
+      background: #dc3545;
+      color: white;
+    }
+
+    .print-preview-btn {
+      background: #17a2b8;
+      color: white;
+    }
+
+    .pdf-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .success-message {
+      background: #d4edda;
+      color: #155724;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+      border-left: 4px solid #28a745;
+    }
+
+    .reports-container {
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .report-card {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 15px;
+      border-left: 4px solid #4CAF50;
+    }
+
+    .report-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .status-badge {
+      padding: 5px 12px;
+      border-radius: 15px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-clean {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status-needs-improvement {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .status-damaged {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .export-btn {
+      background: #007bff;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+
+    .photo-preview {
+      max-width: 200px;
+      max-height: 200px;
+      border-radius: 8px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .mess-chart {
+      margin-top: 10px;
+    }
+
+    .mess-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #f8f9fa;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .mess-table th {
+      background: #4CAF50;
+      color: white;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    .mess-table td {
+      padding: 10px;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    .mess-table input {
+      border: 1px solid #dee2e6;
+      padding: 8px;
+      width: 100%;
+      margin: 0;
+    }
+
+    .campus-areas {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+
+    .area-item {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      border-left: 4px solid #4CAF50;
+    }
+
+    .area-item input[type="checkbox"] {
+      width: auto;
+      margin-right: 10px;
+      transform: scale(1.2);
+    }
+
+    .area-item label {
+      font-weight: 600;
+      color: #333;
+      cursor: pointer;
+      display: inline;
+      margin-bottom: 10px;
+    }
+
+    .area-item textarea {
+      margin-top: 10px;
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      
+      .container {
+        max-width: none;
+      }
+      
+      .header {
+        color: black;
+        margin-bottom: 20px;
+      }
+      
+      .main-tabs, .form-tabs, .pdf-actions, .submit-btn {
+        display: none;
+      }
+      
+      .form-container {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        page-break-after: always;
+        max-width: none;
+        margin: 0;
+        padding: 20px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      .main-tabs, .form-tabs {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .form-container, .reports-container {
+        margin: 0 10px;
+        padding: 20px;
+      }
+
+      .pdf-actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📋 Daily Duty Report System</h1>
+      <p>Comprehensive facility monitoring and reporting</p>
+    </div>
+
+    <div class="main-tabs">
+      <button class="main-tab-btn active" onclick="showSection('reportSection')">📝 Submit Report</button>
+      <button class="main-tab-btn" onclick="showSection('viewSection')">📊 View Reports</button>
+    </div>
+
+    <!-- Report Submission Section -->
+    <div class="section active" id="reportSection">
+      <div class="form-tabs">
+        <button class="form-tab-btn active" onclick="showForm('hostelForm')" id="hostelTab">🏠 Hostel</button>
+        <button class="form-tab-btn" onclick="showForm('messForm')" id="messTab">🍽️ Mess</button>
+        <button class="form-tab-btn" onclick="showForm('classroomForm')" id="classroomTab">🎓 School Building</button>
+        <button class="form-tab-btn" onclick="showForm('damageForm')" id="damageTab">⚠️ Campus Damage</button>
+      </div>
+
+      <!-- Master Submit Section -->
+      <div class="master-submit-container">
+        <div class="progress-indicator" id="progressIndicator">
+          Complete all 4 reports to enable final submission: <span id="completedCount">0</span>/4
+        </div>
+        <button class="master-submit-btn" id="masterSubmitBtn" onclick="generateFinalReport()" disabled>
+          🚀 Generate Final Daily Report
+        </button>
+      </div>
+
+      <div class="success-message" id="successMessage">
+        ✅ Report submitted successfully!
+      </div>
+
+      <!-- Hostel Form -->
+      <div class="form-container active" id="hostelForm">
+        <h3>🏠 Hostel Inspection Report</h3>
+        <form onsubmit="submitReport(event, 'Hostel')">
+          <div class="form-group">
+            <label>📅 Date:</label>
+            <input type="date" name="date" required>
+          </div>
+          <div class="form-group">
+            <label>👨‍🏫 Teacher Name:</label>
+            <input type="text" name="teacher" required placeholder="Enter your full name">
+          </div>
+          <div class="form-group">
+            <label>🕐 Time:</label>
+            <input type="time" name="time" required>
+          </div>
+          <div class="form-group">
+            <label>📝 Remarks:</label>
+            <textarea name="remarks" rows="4" required placeholder="Describe the current condition, any issues found, or general observations..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>✅ Status:</label>
+            <select name="status" required>
+              <option value="">Select status...</option>
+              <option value="Clean">Clean</option>
+              <option value="Needs Improvement">Needs Improvement</option>
+              <option value="Damaged">Damaged</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>📷 Upload Photo:</label>
+            <input type="file" name="photo" accept="image/*" onchange="previewImage(this, 'hostelPreview')">
+            <img id="hostelPreview" class="photo-preview" alt="Preview">
+          </div>
+          <button class="submit-btn" type="submit">Submit Hostel Report</button>
+          
+          <div class="pdf-actions" id="hostelPdfActions" style="display: none;">
+            <button class="pdf-btn download-pdf-btn" onclick="downloadReportPDF('Hostel')">📄 Download PDF</button>
+            <button class="pdf-btn print-preview-btn" onclick="printPreview('Hostel')">🖨️ Print Preview</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Mess Form -->
+      <div class="form-container" id="messForm">
+        <h3>🍽️ Mess Inspection Report</h3>
+        <form onsubmit="submitReport(event, 'Mess')">
+          <div class="form-group">
+            <label>📅 Date:</label>
+            <input type="date" name="date" required>
+          </div>
+          <div class="form-group">
+            <label>👨‍🏫 Teacher Name:</label>
+            <input type="text" name="teacher" required placeholder="Enter your full name">
+          </div>
+          <div class="form-group">
+            <label>🕐 Time:</label>
+            <input type="time" name="time" required>
+          </div>
+
+          <!-- Food Services Chart -->
+          <div class="form-group">
+            <label>🍽️ Food Services Details:</label>
+            <div class="mess-chart">
+              <table class="mess-table">
+                <thead>
+                  <tr>
+                    <th>Meal Time</th>
+                    <th>Food Dishes</th>
+                    <th>Remarks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Breakfast</strong></td>
+                    <td><input type="text" name="breakfast_dishes" placeholder="e.g., Bread, Butter, Tea"></td>
+                    <td><input type="text" name="breakfast_remarks" placeholder="Quality, quantity, taste"></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Lunch</strong></td>
+                    <td><input type="text" name="lunch_dishes" placeholder="e.g., Rice, Dal, Vegetables"></td>
+                    <td><input type="text" name="lunch_remarks" placeholder="Quality, quantity, taste"></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Snacks</strong></td>
+                    <td><input type="text" name="snacks_dishes" placeholder="e.g., Biscuits, Juice"></td>
+                    <td><input type="text" name="snacks_remarks" placeholder="Quality, quantity, taste"></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Dinner</strong></td>
+                    <td><input type="text" name="dinner_dishes" placeholder="e.g., Roti, Rice, Curry"></td>
+                    <td><input type="text" name="dinner_remarks" placeholder="Quality, quantity, taste"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>💧 Drinking Water Quality:</label>
+            <select name="water_quality" required>
+              <option value="">Select water quality...</option>
+              <option value="Excellent">Excellent</option>
+              <option value="Good">Good</option>
+              <option value="Average">Average</option>
+              <option value="Poor">Poor</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>🧹 Overall Cleanliness:</label>
+            <select name="cleanliness" required>
+              <option value="">Select cleanliness level...</option>
+              <option value="Excellent">Excellent</option>
+              <option value="Good">Good</option>
+              <option value="Average">Average</option>
+              <option value="Poor">Poor</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>📝 General Remarks:</label>
+            <textarea name="remarks" rows="3" placeholder="Overall observations, suggestions, staff behavior..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>📷 Upload Photo:</label>
+            <input type="file" name="photo" accept="image/*" onchange="previewImage(this, 'messPreview')">
+            <img id="messPreview" class="photo-preview" alt="Preview">
+          </div>
+          <button class="submit-btn" type="submit">Submit Mess Report</button>
+          
+          <div class="pdf-actions" id="messPdfActions" style="display: none;">
+            <button class="pdf-btn download-pdf-btn" onclick="downloadReportPDF('Mess')">📄 Download PDF</button>
+            <button class="pdf-btn print-preview-btn" onclick="printPreview('Mess')">🖨️ Print Preview</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Classroom Form -->
+      <div class="form-container" id="classroomForm">
+        <h3>🎓 School Building Inspection Report</h3>
+        <form onsubmit="submitReport(event, 'School Building')">
+          <div class="form-group">
+            <label>📅 Date:</label>
+            <input type="date" name="date" required>
+          </div>
+          <div class="form-group">
+            <label>👨‍🏫 Teacher Name:</label>
+            <input type="text" name="teacher" required placeholder="Enter your full name">
+          </div>
+          <div class="form-group">
+            <label>🕐 Time:</label>
+            <input type="time" name="time" required>
+          </div>
+          <div class="form-group">
+            <label>📝 Remarks:</label>
+            <textarea name="remarks" rows="4" required placeholder="Check desks, chairs, whiteboard, projector, cleanliness, lighting..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>✅ Status:</label>
+            <select name="status" required>
+              <option value="">Select status...</option>
+              <option value="Clean">Clean</option>
+              <option value="Needs Improvement">Needs Improvement</option>
+              <option value="Damaged">Damaged</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>📷 Upload Photo:</label>
+            <input type="file" name="photo" accept="image/*" onchange="previewImage(this, 'classroomPreview')">
+            <img id="classroomPreview" class="photo-preview" alt="Preview">
+          </div>
+          <button class="submit-btn" type="submit">Submit School Building Report</button>
+          
+          <div class="pdf-actions" id="classroomPdfActions" style="display: none;">
+            <button class="pdf-btn download-pdf-btn" onclick="downloadReportPDF('School Building')">📄 Download PDF</button>
+            <button class="pdf-btn print-preview-btn" onclick="printPreview('School Building')">🖨️ Print Preview</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Campus Damage Report Form -->
+      <div class="form-container" id="damageForm">
+        <h3>⚠️ Campus Damage Requirement Report</h3>
+        <form onsubmit="submitReport(event, 'Campus Damage')">
+          <div class="form-group">
+            <label>📅 Date:</label>
+            <input type="date" name="date" required>
+          </div>
+          <div class="form-group">
+            <label>👨‍🏫 Teacher Name:</label>
+            <input type="text" name="teacher" required placeholder="Enter your full name">
+          </div>
+          <div class="form-group">
+            <label>🕐 Time:</label>
+            <input type="time" name="time" required>
+          </div>
+
+          <!-- Campus Areas Inspection -->
+          <div class="form-group">
+            <label>🏢 Campus Area Inspection:</label>
+            <div class="campus-areas">
+              <div class="area-item">
+                <input type="checkbox" id="mary_boxing" name="areas" value="Mary Kom Boxing Ring">
+                <label for="mary_boxing">🥊 Mary Kom Boxing Ring</label>
+                <textarea placeholder="Damage details, requirements..." name="mary_boxing_remarks"></textarea>
+              </div>
+              
+              <div class="area-item">
+                <input type="checkbox" id="abhinav_shooting" name="areas" value="Abhinav Bindra Rifle Shooting Hall">
+                <label for="abhinav_shooting">🎯 Abhinav Bindra Rifle Shooting Hall</label>
+                <textarea placeholder="Damage details, requirements..." name="abhinav_shooting_remarks"></textarea>
+              </div>
+              
+              <div class="area-item">
+                <input type="checkbox" id="music_hall" name="areas" value="Music Hall">
+                <label for="music_hall">🎵 Music Hall</label>
+                <textarea placeholder="Damage details, requirements..." name="music_hall_remarks"></textarea>
+              </div>
+              
+              <div class="area-item">
+                <input type="checkbox" id="cadet_mess" name="areas" value="Cadet Mess">
+                <label for="cadet_mess">🍽️ Cadet Mess</label>
+                <textarea placeholder="Damage details, requirements..." name="cadet_mess_remarks"></textarea>
+              </div>
+              
+              <div class="area-item">
+                <input type="checkbox" id="boys_hostel" name="areas" value="Boys Hostel">
+                <label for="boys_hostel">🏠 Boys Hostel</label>
+                <textarea placeholder="Damage details, requirements..." name="boys_hostel_remarks"></textarea>
+              </div>
+              
+              <div class="area-item">
+                <input type="checkbox" id="girls_hostel" name="areas" value="Girls Hostel">
+                <label for="girls_hostel">🏠 Girls Hostel</label>
+                <textarea placeholder="Damage details, requirements..." name="girls_hostel_remarks"></textarea>
+              </div>
+              
+              <div class="area-item">
+                <input type="checkbox" id="school_building" name="areas" value="School Building">
+                <label for="school_building">🏫 School Building</label>
+                <textarea placeholder="Damage details, requirements..." name="school_building_remarks"></textarea>
+              </div>
+              
+              <div class="area-item">
+                <input type="checkbox" id="store" name="areas" value="Store">
+                <label for="store">🏪 Store</label>
+                <textarea placeholder="Damage details, requirements..." name="store_remarks"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>⚠️ Priority Level:</label>
+            <select name="priority" required>
+              <option value="">Select priority level...</option>
+              <option value="Critical">Critical - Immediate Action Required</option>
+              <option value="High">High - Action Required Soon</option>
+              <option value="Medium">Medium - Can be Addressed Later</option>
+              <option value="Low">Low - Minor Issues</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>📝 Overall Summary:</label>
+            <textarea name="summary" rows="4" placeholder="Provide an overall summary of damages, estimated costs, recommended actions..." required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>📷 Upload Photos:</label>
+            <input type="file" name="photo" accept="image/*" multiple onchange="previewImage(this, 'damagePreview')">
+            <img id="damagePreview" class="photo-preview" alt="Preview">
+            <small>You can select multiple photos</small>
+          </div>
+          <button class="submit-btn" type="submit">Submit Campus Damage Report</button>
+          
+          <div class="pdf-actions" id="damagePdfActions" style="display: none;">
+            <button class="pdf-btn download-pdf-btn" onclick="downloadReportPDF('Campus Damage')">📄 Download PDF</button>
+            <button class="pdf-btn print-preview-btn" onclick="printPreview('Campus Damage')">🖨️ Print Preview</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- View Reports Section -->
+    <div class="section" id="viewSection">
+      <div class="reports-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h3>📊 Submitted Reports</h3>
+          <button class="export-btn" onclick="exportReports()">📥 Export CSV</button>
+        </div>
+        <div id="reportsDisplay">
+          <p style="text-align: center; color: #666; padding: 40px;">No reports submitted yet. Submit your first report to see it here!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Store reports in memory
+    let reports = [];
+    let completedReports = {
+      'Hostel': false,
+      'Mess': false,
+      'School Building': false,
+      'Campus Damage': false
+    };
+
+    // Set today's date as default
+    document.addEventListener('DOMContentLoaded', function() {
+      const today = new Date().toISOString().split('T')[0];
+      document.querySelectorAll('input[type="date"]').forEach(input => {
+        input.value = today;
+      });
+      updateMasterSubmitButton();
+    });
+
+    function showSection(sectionId) {
+      document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.main-tab-btn').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById(sectionId).classList.add('active');
+      event.target.classList.add('active');
+      
+      if (sectionId === 'viewSection') {
+        displayReports();
+      }
+    }
+
+    function showForm(formId) {
+      document.querySelectorAll('.form-container').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.form-tab-btn').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById(formId).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    function previewImage(input, previewId) {
+      const preview =
